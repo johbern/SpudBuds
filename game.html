@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spud Buds Prototype</title>
+    <link rel="stylesheet" href="styles.css" />
+      <link rel="preload" as="image" href="TileAssets/salt.png">
+  </head>
+  <body>
+    <main class="app">
+      <header>
+        <a href="index.html" class="home-link" title="Back to Story">
+          <img src="TileAssets/story.png" alt="Back to Story" />
+        </a>
+        <h1 id="level-header">🥔 Spud Buds</h1>
+      </header>
+
+      <p id="message" class="message instructions"></p>
+      <div class="game-wrapper">
+        <div class="sidebar sidebar-left">
+          <section class="goals" id="goals"></section>
+        </div>
+        <section id="board" class="board" aria-label="Match 3 board"></section>
+        <div class="sidebar sidebar-right">
+          <div class="moves-display"><strong>Moves</strong> <span id="moves-left"></span></div>
+        </div>
+      </div>
+    </main>
+
+    <div id="overlay" class="overlay hidden">
+      <div class="card">
+        <h2 id="overlay-title"></h2>
+        <p id="overlay-text"></p>
+        <button id="overlay-button">Continue</button>
+      </div>
+    </div>
+
+    <script src="game.js"></script>
+  </body>
+</html>
