@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spud Buds Prototype</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header>
+        <h1>🥔 Spud Buds</h1>
+        <p class="tagline">A cozy match-3 rescue in the squished lands of the Grand Masher.</p>
+      </header>
+
+      <section class="hud">
+        <div><strong>Level:</strong> <span id="level-name"></span></div>
+        <div><strong>Moves:</strong> <span id="moves-left"></span></div>
+      </section>
+
+      <section class="goals" id="goals"></section>
+
+      <section id="board" class="board" aria-label="Match 3 board"></section>
+
+      <p id="message" class="message"></p>
+
+      <div class="legend">
+        <span>🟤 Whole Potato</span>
+        <span>🥔 Potato Slice</span>
+        <span>🧈 Butter Pat</span>
+        <span>🌿 Herb Sprig</span>
+        <span>✨ Butter Blast</span>
+      </div>
+    </main>
+
+    <div id="overlay" class="overlay hidden">
+      <div class="card">
+        <h2 id="overlay-title"></h2>
+        <p id="overlay-text"></p>
+        <button id="overlay-button">Continue</button>
+      </div>
+    </div>
+
+    <script src="game.js"></script>
+  </body>
+</html>
