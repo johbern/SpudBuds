@@ -5,13 +5,14 @@ const TILE_INFO = {
   potato: { emoji: "🟤", name: "Whole Potato" },
   slice: { emoji: "🥔", name: "Potato Slice" },
   butter: { emoji: "🧈", name: "Butter Pat" },
-  herb: { emoji: "🌿", name: "Herb Sprig" }
+  herb: { emoji: "🌿", name: "Herb Sprig" },
+  salt: { emoji: "🧂", name: "Salt Crystal" }
 };
 
 const LEVELS = [
   {
     name: "Level 1 — Learn Matching",
-    moves: 30,
+    moves: 20,
     tiles: ["potato", "butter", "herb"],
     goals: [{ id: "matches", label: "Make 6 matches", target: 6 }],
     intro:
@@ -19,10 +20,10 @@ const LEVELS = [
   },
   {
     name: "Level 2 — Collection Time",
-    moves: 28,
-    tiles: ["potato", "butter", "herb", "slice"],
+    moves: 22,
+    tiles: ["potato", "butter", "herb", "salt"],
     goals: [
-      { id: "potato", label: "Collect 10 Whole Potatoes", target: 10 },
+      { id: "potato", label: "Collect 10 Potato Pairs", target: 10 },
       { id: "butter", label: "Collect 8 Butter Pats", target: 8 }
     ],
     intro:
@@ -31,13 +32,36 @@ const LEVELS = [
   {
     name: "Level 3 — Butter Blast Discovery",
     moves: 30,
-    tiles: ["potato", "butter", "herb", "slice"],
+    tiles: ["potato", "butter", "herb", "salt"],
     goals: [
       { id: "blasts", label: "Use 2 Butter Blasts", target: 2 },
       { id: "clear", label: "Clear 12 tiles", target: 12 }
     ],
     intro:
       "Beatrice Oniona dramatically points at the sky: 'The mashed horizon is emotionally overwhelming!' Time for gentle butter-powered restoration."
+  },
+  {
+    name: "Level 4 — The Grand Challenge",
+    moves: 18,
+    tiles: ["potato", "butter", "herb", "salt"],
+    goals: [
+      { id: "potato", label: "Collect 8 Potato Pairs", target: 8 },
+      { id: "butter", label: "Collect 12 Butter Pats", target: 12 }
+    ],
+    intro:
+      "All three Spud Buds gather solemnly. 'This is it. The final push to restore our home. We believe in you, friend.'"
+  },
+  {
+    name: "Level 5 — Breaking Through",
+    moves: 20,
+    tiles: ["potato", "butter", "herb", "salt"],
+    goals: [
+      { id: "clear", label: "Clear 20 tiles", target: 20 },
+      { id: "potato", label: "Collect 6 Potato Pairs", target: 6 },
+      { id: "pressed", label: "Clear Mashed Tiles", target: 12 }
+    ],
+    intro:
+      "Deep beneath the surface, layers of compressed earth stand stubborn. The mash is thick, dense, and tightly packed. You sense something pressing back."
   }
 ];
 
@@ -52,7 +76,7 @@ const state = {
 const el = {
   board: document.getElementById("board"),
   goals: document.getElementById("goals"),
-  levelName: document.getElementById("level-name"),
+  levelHeader: document.getElementById("level-header"),
   movesLeft: document.getElementById("moves-left"),
   message: document.getElementById("message"),
   overlay: document.getElementById("overlay"),
@@ -63,8 +87,8 @@ const el = {
 
 el.overlayButton.addEventListener("click", () => {
   el.overlay.classList.add("hidden");
-  if (!state.board.length) startLevel(0);
-  else if (state.levelIndex < LEVELS.length) startLevel(state.levelIndex);
+  if (state.levelIndex < LEVELS.length) startLevel(state.levelIndex);
+  else startLevel(0);
 });
 
 function showOverlay(title, text, buttonText = "Continue") {
@@ -84,12 +108,35 @@ function startLevel(index) {
     potato: 0,
     butter: 0,
     blasts: 0,
-    clear: 0
+    clear: 0,
+    pressed: 0
   };
   state.board = createBoard(level.tiles);
-  if (index === 2) seedEarlyButterBlastOpportunity();
+  if (index === 2) {
+    seedEarlyButterBlastOpportunity();
+    resolveInitial(state.board, level.tiles); // Clean up any matches created by seeding
+  }
+  if (index === 3) {
+    // Seed awkward tiles (may introduce new matches) then resolve to ensure no starting matches
+    seedAwkwardTiles();
+    resolveInitial(state.board, level.tiles);
+  }
+  if (index === 4) {
+    // Ensure the initial board has no matches, then mark some tiles as pressed
+    resolveInitial(state.board, level.tiles);
+    seedPressedTiles();
+  }
   draw();
-  setMessage("Swap adjacent tiles to make cozy matches.");
+  
+  // Set level-specific instructions
+  const instructions = [
+    "Swap adjacent tiles to create matches of three or more.",
+    "Match potatoes and butter to rebuild the valley.",
+    "Create matches of 4+ tiles to unlock the Butter Blast power-up.",
+    "Careful planning needed—you have limited moves!",
+    "Some tiles are compressed. Loosen them with a match, then clear normally."
+  ];
+  setMessage(instructions[index]);
 }
 
 function createBoard(tilePool) {
@@ -122,9 +169,42 @@ function seedEarlyButterBlastOpportunity() {
   state.board[row][5] = { type: "butter", power: null };
 }
 
+function seedAwkwardTiles() {
+  // Place some salt and herb tiles in scattered positions to make the puzzle trickier
+  const awkwardPositions = [
+    [0, 3], [0, 4], [1, 1], [1, 6],
+    [2, 2], [2, 5], [3, 0], [3, 7],
+    [5, 2], [5, 5], [6, 1], [6, 6],
+    [7, 3], [7, 4]
+  ];
+  
+  const awkwardTypes = ["salt", "herb"];
+  awkwardPositions.forEach((pos) => {
+    const [r, c] = pos;
+    state.board[r][c] = { type: awkwardTypes[Math.floor(Math.random() * awkwardTypes.length)], power: null };
+  });
+}
+
+function seedPressedTiles() {
+  // Seed about 12-16 random tiles as "pressed" tiles
+  const pressedCount = 12 + Math.floor(Math.random() * 5);
+  const pressedPositions = new Set();
+  
+  while (pressedPositions.size < pressedCount) {
+    const r = Math.floor(Math.random() * SIZE);
+    const c = Math.floor(Math.random() * SIZE);
+    const key = `${r},${c}`;
+    
+    if (!pressedPositions.has(key)) {
+      pressedPositions.add(key);
+      state.board[r][c].pressed = true;
+    }
+  }
+}
+
 function draw() {
   const level = LEVELS[state.levelIndex];
-  el.levelName.textContent = level.name;
+  el.levelHeader.textContent = level.name;
   el.movesLeft.textContent = state.stats.moves;
 
   el.goals.innerHTML = "";
@@ -132,7 +212,17 @@ function draw() {
     const value = state.stats[goal.id];
     const row = document.createElement("div");
     row.className = `goal ${value >= goal.target ? "done" : ""}`;
-    row.textContent = `${goal.label}: ${Math.min(value, goal.target)}/${goal.target}`;
+
+    const label = document.createElement("div");
+    label.className = "goal-label";
+    label.textContent = goal.label;
+
+    const count = document.createElement("div");
+    count.className = "goal-target";
+    count.textContent = `${Math.min(value, goal.target)}/${goal.target}`;
+
+    row.appendChild(label);
+    row.appendChild(count);
     el.goals.appendChild(row);
   });
 
@@ -141,11 +231,18 @@ function draw() {
     for (let c = 0; c < SIZE; c++) {
       const tile = state.board[r][c];
       const btn = document.createElement("button");
-      btn.className = `tile ${tile.power ? "power" : ""}`;
+      btn.className = `tile ${tile.power ? "power" : ""} ${tile.pressed ? "pressed" : ""}`;
       if (state.selected && state.selected.r === r && state.selected.c === c) {
         btn.classList.add("selected");
       }
-      btn.textContent = tile.power ? "✨" : TILE_INFO[tile.type].emoji;
+      if (tile.power === "butterBlast") {
+        btn.textContent = "✨";
+      } else {
+        const img = document.createElement("img");
+        img.src = `TileAssets/${tile.type}.png`;
+        img.alt = TILE_INFO[tile.type].name;
+        btn.appendChild(img);
+      }
       btn.setAttribute("aria-label", tile.power ? "Butter Blast" : TILE_INFO[tile.type].name);
       btn.onclick = () => onTileClick(r, c);
       el.board.appendChild(btn);
@@ -155,7 +252,13 @@ function draw() {
 
 function onTileClick(r, c) {
   if (state.animating || state.stats.moves <= 0) return;
-  const tile = state.board[r][c];
+  const tile = (state.board[r] && state.board[r][c]) || null;
+  if (!tile) {
+    // Defensive: if tile is missing, clear selection and re-draw so UI stays interactive
+    state.selected = null;
+    draw();
+    return;
+  }
 
   if (tile.power === "butterBlast") {
     useButterBlast(r, c);
@@ -211,7 +314,7 @@ async function handleMove(a, b) {
     return;
   }
 
-  setMessage("Nice and cozy. Keep restoring the valley.");
+  setMessage("Nice work! Keep restoring the valley.");
   state.animating = false;
   draw();
 }
@@ -228,10 +331,18 @@ async function resolveCascades(groups, clearSet, powerSpawns) {
     const cleared = Array.from(currentClear).map((k) => k.split(",").map(Number));
     for (const [r, c] of cleared) {
       const tile = state.board[r][c];
-      state.stats.clear += 1;
-      if (tile.type === "potato") state.stats.potato += 1;
-      if (tile.type === "butter") state.stats.butter += 1;
-      state.board[r][c] = null;
+      
+      // If tile is pressed, loosen it instead of clearing
+      if (tile && tile.pressed) {
+        tile.pressed = false;
+        state.stats.pressed = (state.stats.pressed || 0) + 1;
+      } else {
+        // Normal clear
+        state.stats.clear += 1;
+        if (tile.type === "potato") state.stats.potato += 1;
+        if (tile.type === "butter") state.stats.butter += 1;
+        state.board[r][c] = null;
+      }
     }
 
     currentPowers.forEach((coord) => {
@@ -268,6 +379,7 @@ function findMatches(board) {
   const groups = [];
   const clearSet = new Set();
   const powerSpawns = [];
+  const groupOrientations = [];
 
   for (let r = 0; r < SIZE; r++) {
     let start = 0;
@@ -282,6 +394,7 @@ function findMatches(board) {
             clearSet.add(`${r},${x}`);
           }
           groups.push(group);
+          groupOrientations.push("h");
           if (len >= 4) powerSpawns.push([r, start + Math.floor(len / 2)]);
         }
         start = c;
@@ -302,6 +415,7 @@ function findMatches(board) {
             clearSet.add(`${y},${c}`);
           }
           groups.push(group);
+          groupOrientations.push("v");
           if (len >= 4) powerSpawns.push([start + Math.floor(len / 2), c]);
         }
         start = r;
@@ -311,7 +425,40 @@ function findMatches(board) {
 
   const uniqPower = [];
   const seen = new Set();
-  for (const [r, c] of powerSpawns) {
+  // Detect T / L intersections: if a coord is part of both a horizontal and vertical group
+  // and the union of those groups is more than 4 tiles, spawn a power at the intersection.
+  const coordToGroups = new Map();
+  groups.forEach((grp, gi) => {
+    grp.forEach(([rr, cc]) => {
+      const k = `${rr},${cc}`;
+      if (!coordToGroups.has(k)) coordToGroups.set(k, []);
+      coordToGroups.get(k).push(gi);
+    });
+  });
+
+  const intersectionSpawns = [];
+  for (const [coord, groupIdxs] of coordToGroups.entries()) {
+    // need at least one horizontal and one vertical group at this coord
+    const hasH = groupIdxs.some((i) => groupOrientations[i] === "h");
+    const hasV = groupIdxs.some((i) => groupOrientations[i] === "v");
+    if (!hasH || !hasV) continue;
+
+    // find all unique tiles in the union of the first h and first v groups that intersect here
+    const hIndex = groupIdxs.find((i) => groupOrientations[i] === "h");
+    const vIndex = groupIdxs.find((i) => groupOrientations[i] === "v");
+    const union = new Set();
+    groups[hIndex].forEach(([rr, cc]) => union.add(`${rr},${cc}`));
+    groups[vIndex].forEach(([rr, cc]) => union.add(`${rr},${cc}`));
+
+    if (union.size > 4) {
+      const [r, c] = coord.split(",").map(Number);
+      intersectionSpawns.push([r, c]);
+    }
+  }
+
+  // Combine straight-line power spawns and intersection spawns
+  const combinedSpawns = powerSpawns.concat(intersectionSpawns);
+  for (const [r, c] of combinedSpawns) {
     const key = `${r},${c}`;
     if (seen.has(key)) continue;
     seen.add(key);
@@ -349,10 +496,18 @@ async function useButterBlast(r, c) {
     const [rr, cc] = key.split(",").map(Number);
     const tile = state.board[rr][cc];
     if (!tile) return;
-    state.stats.clear += 1;
-    if (tile.type === "potato") state.stats.potato += 1;
-    if (tile.type === "butter") state.stats.butter += 1;
-    state.board[rr][cc] = null;
+    
+    // If tile is pressed, loosen it instead of clearing
+    if (tile.pressed) {
+      tile.pressed = false;
+      state.stats.pressed = (state.stats.pressed || 0) + 1;
+    } else {
+      // Normal clear
+      state.stats.clear += 1;
+      if (tile.type === "potato") state.stats.potato += 1;
+      if (tile.type === "butter") state.stats.butter += 1;
+      state.board[rr][cc] = null;
+    }
   });
 
   collapseBoard();
@@ -367,9 +522,17 @@ async function useButterBlast(r, c) {
     return;
   }
 
+  // Allow further input after the blast finishes
   state.animating = false;
-  setMessage("Butter Blast melted through the mash!");
+  state.selected = null;
   draw();
+
+  // If the blast used the last move, refresh the level like a normal move would
+  if (state.stats.moves <= 0) {
+    setMessage("Out of moves, but no stress — refreshing level.");
+    setTimeout(() => startLevel(state.levelIndex), 700);
+    return;
+  }
 }
 
 function checkWin() {
@@ -396,7 +559,9 @@ function finishLevel() {
   const intros = [
     "Carra T. Gold mutters, 'Fine. This zone is less mashed than before.'",
     "Rad-ish Green trips over a Butter Blast and accidentally applauds your technique.",
-    LEVELS[state.levelIndex].intro
+    "Beatrice Oniona wipes away a tear. 'The valley is nearly whole again. One last push, friend.'",
+    "The awkward tiles shatter. The Spud Buds nod in approval.",
+    "The pressed tiles release with a satisfying pop. The deepest layer of the mash begins to shift..."
   ];
 
   showOverlay(`Level ${justFinished + 1} Complete!`, intros[justFinished], "Next Level");
