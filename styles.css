@@ -1,12 +1,41 @@
+/* Overlay title margin adjustment */
+#overlay-title, .card h2 {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+/* Overlay button style for dialogs */
+.overlay-button {
+   display: inline-block;
+        background: var(--accent);
+  color: white;
+        padding: 0.9rem 2rem;
+        border-radius: 12px;
+        text-decoration: none;
+        font-size: 1.1rem;
+        font-weight: bold;
+        transition: all 200ms ease;
+        cursor: pointer;
+        border: none;
+      }
+
+.overlay-button:hover {
+          transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(198, 138, 83, 0.3);
+}
+
+.overlay-button:active {
+  background: var(--accent);
+  transform: translateY(0);
+}
 @import url('https://fonts.googleapis.com/css2?family=Sour+Gummy:wght@100..900&display=swap');
 
 :root {
-  --bg: #f8f1df;
+  --bg: #ECDCC9;
   --panel: #fff8ea;
   --ink: #4a3425;
-  --accent: #c68a53;
+  --accent: #2E5266;
   --tile: #f4debc;
-  --selected: #f4b25d;
+  --selected: #4D243D;
 }
 
 * {
@@ -64,6 +93,8 @@ header {
 
 .home-link:hover {
   background-color: rgba(198, 138, 83, 0.15);
+            transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(198, 138, 83, 0.3);
 }
 
 .tagline {
@@ -204,10 +235,59 @@ header {
   pointer-events: none;
 }
 
-.tile:hover { transform: translateY(-1px); }
-.tile.selected { outline: 3px solid var(--selected); }
+.tile:hover { transform: translateY(-2px); }
+.tile.selected {
+  outline: 3px solid var(--selected);
+  background: rgba(77, 36, 61, 0.15); /* subtle background for selected */
+}
 .tile.clearing { background-color: #ffefcc; transform: scale(0.9); }
-.tile.power { background: #ffe7ab; }
+.tile.power {
+  background: #ffe7ab;
+  position: relative;
+}
+
+.tile.power img {
+  width: 70%;
+  height: 70%;
+  z-index: 1;
+  animation: sparkle-img 1.2s linear infinite;
+  filter: drop-shadow(0 0 8px #fff6b0) drop-shadow(0 0 16px #ffe066);
+}
+
+/* Ensure overlay is above all tiles and effects */
+.overlay {
+  z-index: 1000;
+}
+
+.tile.power {
+  z-index: 1;
+}
+
+@keyframes sparkle-img {
+  0% {
+    filter: drop-shadow(0 0 8px #fff6b0) drop-shadow(0 0 16px #ffe066);
+    transform: scale(1) rotate(0deg);
+  }
+  20% {
+    filter: drop-shadow(0 0 16px #fff6b0) drop-shadow(0 0 32px #ffe066);
+    transform: scale(1.05) rotate(-5deg);
+  }
+  50% {
+    filter: drop-shadow(0 0 24px #fff6b0) drop-shadow(0 0 48px #ffe066);
+    transform: scale(1.1) rotate(5deg);
+  }
+  80% {
+    filter: drop-shadow(0 0 16px #fff6b0) drop-shadow(0 0 32px #ffe066);
+    transform: scale(1.05) rotate(-5deg);
+  }
+  100% {
+    filter: drop-shadow(0 0 8px #fff6b0) drop44-shadow(0 0 16px #ffe066);
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* Sparkle effect */
+
 .tile.pressed {
   background: linear-gradient(135deg, #e8cfa0 0%, #d9bf88 100%);
   box-shadow: 
@@ -223,17 +303,20 @@ header {
   background: rgba(73, 47, 29, 0.35);
   display: grid;
   place-items: center;
-  padding: 1rem;
+  gap: 1rem;
 }
 
 .hidden { display: none; }
 
 .card {
-  width: min(520px, 95vw);
+  width: min(580px, 95vw);
   background: #fff6e7;
   border: 3px solid #d29b5f;
   border-radius: 16px;
   padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 button {
