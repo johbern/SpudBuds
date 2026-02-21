@@ -23,8 +23,8 @@ const LEVELS = [
     moves: 22,
     tiles: ["potato", "butter", "herb", "salt"],
     goals: [
-      { id: "potato", label: "Collect 10 Potato Pairs", target: 10 },
-      { id: "butter", label: "Collect 8 Butter Pats", target: 8 }
+      { id: "potato", label: 'Collect 10 <img src="TileAssets/potato.png" alt="Potato" style="height:2.5em;vertical-align:middle;"> ', target: 10 },
+        { id: "butter", label: 'Collect 8 <img src="TileAssets/butter.png" alt="Butter" style="height:2.5em;vertical-align:middle;">', target: 8 }
     ],
     intro:
       "Rad-ish Green waves the Sacred Implements around wildly. 'I improved the weather by making everything... denser?'"
@@ -34,7 +34,7 @@ const LEVELS = [
     moves: 30,
     tiles: ["potato", "butter", "herb", "salt"],
     goals: [
-      { id: "blasts", label: "Use 2 Butter Blasts", target: 2 },
+      { id: "blasts", label: 'Use 2 <img src="TileAssets/supernova.png" alt="Supernova" style="height:2.5em;vertical-align:middle;">', target: 2 },
       { id: "clear", label: "Clear 12 tiles", target: 12 }
     ],
     intro:
@@ -45,8 +45,8 @@ const LEVELS = [
     moves: 18,
     tiles: ["potato", "butter", "herb", "salt"],
     goals: [
-      { id: "potato", label: "Collect 8 Potato Pairs", target: 8 },
-      { id: "butter", label: "Collect 12 Butter Pats", target: 12 }
+      { id: "potato", label: 'Collect 8 <img src="TileAssets/potato.png" alt="Potato" style="height:1.2em;vertical-align:middle;"> ', target: 8 },
+        { id: "butter", label: 'Collect 12 <img src="TileAssets/butter.png" alt="Butter" style="height:1.2em;vertical-align:middle;">', target: 12 }
     ],
     intro:
       "All three Spud Buds gather solemnly. 'This is it. The final push to restore our home. We believe in you, friend.'"
@@ -57,7 +57,7 @@ const LEVELS = [
     tiles: ["potato", "butter", "herb", "salt"],
     goals: [
       { id: "clear", label: "Clear 20 tiles", target: 20 },
-      { id: "potato", label: "Collect 6 Potato Pairs", target: 6 },
+      { id: "potato", label: 'Collect 6 <img src="TileAssets/potato.png" alt="Potato" style="height:1.2em;vertical-align:middle;"> Pairs', target: 6 },
       { id: "pressed", label: "Clear Mashed Tiles", target: 12 }
     ],
     intro:
@@ -93,7 +93,7 @@ el.overlayButton.addEventListener("click", () => {
 
 function showOverlay(title, text, buttonText = "Continue") {
   el.overlayTitle.textContent = title;
-  el.overlayText.textContent = text;
+  el.overlayText.innerHTML = text;
   el.overlayButton.textContent = buttonText;
   el.overlay.classList.remove("hidden");
 }
@@ -215,7 +215,7 @@ function draw() {
 
     const label = document.createElement("div");
     label.className = "goal-label";
-    label.textContent = goal.label;
+    label.innerHTML = goal.label;
 
     const count = document.createElement("div");
     count.className = "goal-target";
@@ -236,7 +236,10 @@ function draw() {
         btn.classList.add("selected");
       }
       if (tile.power === "butterBlast") {
-        btn.textContent = "✨";
+        const img = document.createElement("img");
+        img.src = "TileAssets/supernova.png";
+        img.alt = "Supernova";
+        btn.appendChild(img);
       } else {
         const img = document.createElement("img");
         img.src = `TileAssets/${tile.type}.png`;
@@ -345,10 +348,13 @@ async function resolveCascades(groups, clearSet, powerSpawns) {
       }
     }
 
-    currentPowers.forEach((coord) => {
-      const [r, c] = coord;
-      state.board[r][c] = { type: "butter", power: "butterBlast" };
-    });
+    // Only spawn Butter Blast power tiles in level 3 or later
+    if (state.levelIndex >= 2) {
+      currentPowers.forEach((coord) => {
+        const [r, c] = coord;
+        state.board[r][c] = { type: "butter", power: "butterBlast" };
+      });
+    }
 
     collapseBoard();
     draw();
@@ -595,8 +601,26 @@ function delay(ms) {
   return new Promise((res) => setTimeout(res, ms));
 }
 
+// Preload the first level in the background while overlay is open
+startLevel(0);
 showOverlay(
-  "Welcome, Spud Bud!",
-  "The Grand Masher has compressed the valley into a very dramatic potato collage. Make gentle matches, collect ingredients, and discover the Butter Blast.",
-  "Start Level 1"
+  "Ah! A new arrival. Splendid!",
+  `<p>A round figure in a tidy waistcoat, tall top hat, and carefully knotted ascot approaches with surprising urgency, pausing to catch his breath before addressing you with great formality.</p>
+  
+  <p>“I’m Mayor Taterwell. Under normal circumstances, I would be welcoming you somewhere a good deal less… compressed. You’ll notice that being upright currently makes you one of the more structurally sound features in view.”</p>
+
+<p>He gestures to the horizon, which is suspiciously flat.</p>
+
+<p>“We’ve had a bit of trouble, you see. Someone has been rather overenthusiastic with the Grand Masher. It’s an old tending tool, meant for gentle shaping and keeping the land in order. A light touch, now and then.”</p>
+
+<p>“This was not a light touch.”</p>
+
+<p>“The Fryfields, and a few other places, have been pressed so tightly that everything’s lost its structure. Nothing’s gone, mind you. It’s all just… flat.”</p>
+
+<p>“But if we gather what belongs together and help the right pieces reconnect, the land will start to remember its shape. Bit by bit, we can set things right again.”</p>
+
+<p>He gives you an encouraging nod.</p>
+
+<p>“You seem like just the sort of help we need. Shall we begin?”</p>`,
+  "Let's go!"
 );
