@@ -45,8 +45,8 @@ const LEVELS = [
     moves: 18,
     tiles: ["potato", "butter", "herb", "salt"],
     goals: [
-      { id: "potato", label: 'Collect 8 <img src="TileAssets/potato.png" alt="Potato" style="height:1.2em;vertical-align:middle;"> ', target: 8 },
-        { id: "butter", label: 'Collect 12 <img src="TileAssets/butter.png" alt="Butter" style="height:1.2em;vertical-align:middle;">', target: 12 }
+      { id: "potato", label: 'Collect 8 <img src="TileAssets/potato.png" alt="Potato" style="height:2.5em;vertical-align:middle;"> ', target: 8 },
+        { id: "butter", label: 'Collect 12 <img src="TileAssets/butter.png" alt="Butter" style="height:2.5em;vertical-align:middle;">', target: 12 }
     ],
     intro:
       "All three Spud Buds gather solemnly. 'This is it. The final push to restore our home. We believe in you, friend.'"
@@ -57,8 +57,8 @@ const LEVELS = [
     tiles: ["potato", "butter", "herb", "salt"],
     goals: [
       { id: "clear", label: "Clear 20 tiles", target: 20 },
-      { id: "potato", label: 'Collect 6 <img src="TileAssets/potato.png" alt="Potato" style="height:1.2em;vertical-align:middle;"> Pairs', target: 6 },
-      { id: "pressed", label: "Clear Mashed Tiles", target: 12 }
+      { id: "potato", label: 'Collect 6 <img src="TileAssets/potato.png" alt="Potato" style="height:2.5em;vertical-align:middle;">', target: 6 },
+      { id: "pressed", label: "Clear Mash", target: 12 }
     ],
     intro:
       "Deep beneath the surface, layers of compressed earth stand stubborn. The mash is thick, dense, and tightly packed. You sense something pressing back."
@@ -297,7 +297,7 @@ async function handleMove(a, b) {
   const before = findMatches(state.board);
   if (!before.clearSet.size) {
     swap(a, b);
-    setMessage("Those spuds just traded places. Try another swap!");
+    setMessage("That's not a match. Try another swap!");
     state.animating = false;
     draw();
     return;
@@ -352,6 +352,12 @@ async function resolveCascades(groups, clearSet, powerSpawns) {
     if (state.levelIndex >= 2) {
       currentPowers.forEach((coord) => {
         const [r, c] = coord;
+        const tile = state.board[r][c];
+        if (tile && tile.pressed) {
+          tile.pressed = false;
+          state.stats.pressed = (state.stats.pressed || 0) + 1;
+          return;
+        }
         state.board[r][c] = { type: "butter", power: "butterBlast" };
       });
     }
@@ -563,8 +569,10 @@ function finishLevel() {
   }
 
   const intros = [
-    "Carra T. Gold mutters, 'Fine. This zone is less mashed than before.'",
-    "Rad-ish Green trips over a Butter Blast and accidentally applauds your technique.",
+    `<p>“Excellent work. Every match brings us something useful. These pieces aren’t just clearing space, you see, they’re the very materials we need to help things take shape again. We’re essentially rebuilding a landscape that’s been rather thoroughly sat on.”</p>
+    <p>“With enough of the right pieces, we can help things unstick themselves and stand as they should.”</p>`,
+    `<p>“Well now, that’s interesting. When more than three of the same pieces come together, they seem to create a little burst of energy, a sort of blast that clears away whatever’s pressed closest to them.”</p>
+    <p>“That should make collecting what we need far more efficient. A welcome development, given the amount of un-mashing ahead of us.”</p>`,
     "Beatrice Oniona wipes away a tear. 'The valley is nearly whole again. One last push, friend.'",
     "The awkward tiles shatter. The Spud Buds nod in approval.",
     "The pressed tiles release with a satisfying pop. The deepest layer of the mash begins to shift..."
@@ -601,26 +609,40 @@ function delay(ms) {
   return new Promise((res) => setTimeout(res, ms));
 }
 
-// Preload the first level in the background while overlay is open
-startLevel(0);
-showOverlay(
-  "Ah! A new arrival. Splendid!",
-  `<p>A round figure in a tidy waistcoat, tall top hat, and carefully knotted ascot approaches with surprising urgency, pausing to catch his breath before addressing you with great formality.</p>
-  
-  <p>“I’m Mayor Taterwell. Under normal circumstances, I would be welcoming you somewhere a good deal less… compressed. You’ll notice that being upright currently makes you one of the more structurally sound features in view.”</p>
+function getRequestedLevelIndex() {
+  const params = new URLSearchParams(window.location.search);
+  const raw = Number(params.get("level"));
+  if (!Number.isInteger(raw)) return null;
+  if (raw < 1 || raw > LEVELS.length) return null;
+  return raw - 1;
+}
 
-<p>He gestures to the horizon, which is suspiciously flat.</p>
+const requestedLevelIndex = getRequestedLevelIndex();
 
-<p>“We’ve had a bit of trouble, you see. Someone has been rather overenthusiastic with the Grand Masher. It’s an old tending tool, meant for gentle shaping and keeping the land in order. A light touch, now and then.”</p>
+if (requestedLevelIndex !== null) {
+  startLevel(requestedLevelIndex);
+} else {
+  // Preload the first level in the background while overlay is open
+  startLevel(0);
+  showOverlay(
+    "Ah! A new arrival. Splendid!",
+    `<p>A round figure in a tall top hat and carefully knotted ascot approaches with surprising urgency, pausing to catch his breath before addressing you with great formality.</p>
+    
+    <p>“I’m Mayor Taterwell. Under normal circumstances, I would be welcoming you somewhere a good deal less… compressed. You’ll notice that being upright currently makes you one of the more structurally sound features in view.”</p>
 
-<p>“This was not a light touch.”</p>
+  <p>He gestures to the horizon, which is suspiciously flat.</p>
 
-<p>“The Fryfields, and a few other places, have been pressed so tightly that everything’s lost its structure. Nothing’s gone, mind you. It’s all just… flat.”</p>
+  <p>“We’ve had a bit of trouble, you see. Someone has been rather overenthusiastic with the Grand Masher. It’s an old tending tool, meant for gentle shaping and keeping the land in order. A light touch, now and then.”</p>
 
-<p>“But if we gather what belongs together and help the right pieces reconnect, the land will start to remember its shape. Bit by bit, we can set things right again.”</p>
+  <p>“This was not a light touch.”</p>
 
-<p>He gives you an encouraging nod.</p>
+  <p>“The Fryfields, and a few other places, have been pressed so tightly that everything’s lost its structure. Nothing’s gone, mind you. It’s all just… flat.”</p>
 
-<p>“You seem like just the sort of help we need. Shall we begin?”</p>`,
-  "Let's go!"
-);
+  <p>“But if we gather what belongs together and help the right pieces reconnect, the land will start to remember its shape. Bit by bit, we can set things right again.”</p>
+
+  <p>He gives you an encouraging nod.</p>
+
+  <p>“You seem like just the sort of help we need. Shall we begin?”</p>`,
+    "Let's go!"
+  );
+}
